@@ -17,6 +17,7 @@ public class Main {
         int type_of_ticket = 0;
         int amount_of_tickets = 0;
         int type_of_attraction = 0;
+        int replace_tickets = 0;
 
         //extra attraction prices
         final float[] attraction_prices = {2.5f, 2, 5};
@@ -38,11 +39,13 @@ public class Main {
         float final_cost = 0f;
         int booking_number = 0;
 
-        //task 3
-        float alternate_total_price_family = 0;
-        float alternate_total_price_group = 0;
+        //alternate prices
+        boolean alternate_prices_possible = false;
+        float alternate_group_price = 0;
+        float alternate_family_price = 0;
         boolean family_is_better = false;
         int[] alternate_number_of_tickets_buying = {0, 0, 0, 0, 0};
+
 
 
         while (continue_booking == 1) {
@@ -52,14 +55,16 @@ public class Main {
             type_of_ticket = 0;
             amount_of_tickets = 0;
             type_of_attraction = 0;
+            replace_tickets = 0;
             children_available = 0;
             continue_ticket_purchase = 1;
             continue_attraction_purchase = 1;
             total_tickets = 0;
             attractions_cost = 0;
             final_cost = 0f;
-            alternate_total_price_family = 0;
-            alternate_total_price_group = 0;
+            alternate_prices_possible = false;
+            alternate_group_price = 0;
+            alternate_family_price = 0;
             family_is_better = false;
             for (int i = 0; i < 5; i++) {
                 number_of_tickets_buying[i] = 0;
@@ -153,7 +158,7 @@ public class Main {
 
 
                 //children calculations
-                if (type_of_ticket == 0) {children_available += (2 * amount_of_tickets);}
+                if (type_of_ticket == 0 || type_of_ticket == 2) {children_available += (2 * amount_of_tickets);}
                 if (type_of_ticket == 1) {children_available -= amount_of_tickets;}
 
 
@@ -220,7 +225,7 @@ public class Main {
 
 
             //final cost calculations
-            total_tickets = number_of_tickets_buying[0] + number_of_tickets_buying[1] + number_of_tickets_buying[2] + number_of_tickets_buying[3] + number_of_tickets_buying[4];
+            total_tickets = number_of_tickets_buying[0] + number_of_tickets_buying[1] + number_of_tickets_buying[2] + (number_of_tickets_buying[3] * 5) + number_of_tickets_buying[4];
 
             for (int i = 0; i < 3; i++) {
                 if (extra_attractions_bought[i]) {attractions_cost += total_tickets * attraction_prices[i];}
@@ -235,42 +240,42 @@ public class Main {
             }
 
 
-
             //alternate calculations
-            //group
-            if (total_tickets > 5) {
+            if (total_tickets >= 6 || ((number_of_tickets_buying[0] >= 2 || number_of_tickets_buying[2] >= 2) && number_of_tickets_buying[1] >= 3)) {
+                alternate_prices_possible = true;
                 alternate_number_of_tickets_buying = number_of_tickets_buying;
+
+                if (total_tickets >= 6) {
+                    if (days_in_a_row == 1) {
+                        alternate_group_price = total_tickets * ticket_one_day_prices[4];
+                    } else if (days_in_a_row == 2) {
+                        alternate_group_price = total_tickets * ticket_two_day_prices[4];
+                    }
+                    alternate_group_price += attractions_cost;
+                }
+
+                while ((alternate_number_of_tickets_buying[0] >= 2 || alternate_number_of_tickets_buying[2] >= 2) && alternate_number_of_tickets_buying[1] >= 3) {
+                    alternate_number_of_tickets_buying[1] -= 3;
+
+                    if (alternate_number_of_tickets_buying[0] > 2) {
+                        alternate_number_of_tickets_buying[0] -= 2;
+                    } else if (alternate_number_of_tickets_buying[2] > 2) {
+                        alternate_number_of_tickets_buying[2] -= 2;
+                    }
+                    alternate_number_of_tickets_buying[3] += 1;
+                }
                 if (days_in_a_row == 1) {
-                    alternate_total_price_group = total_tickets * ticket_one_day_prices[4];
+                    for (int i = 0; i < 5; i++) {alternate_family_price += (alternate_number_of_tickets_buying[i] * ticket_one_day_prices[i]);}
                 } else if (days_in_a_row == 2) {
-                    alternate_total_price_group = total_tickets * ticket_two_day_prices[4];
+                    for (int i = 0; i < 5; i++) {alternate_family_price += (alternate_number_of_tickets_buying[i] * ticket_two_day_prices[i]);}
                 }
-            }
+                alternate_family_price += attractions_cost;
 
-            alternate_total_price_group += attractions_cost;
-
-            //family
-            while ((alternate_number_of_tickets_buying[0] > 2 || alternate_number_of_tickets_buying[2] >2) && alternate_number_of_tickets_buying[1] > 3) {
-
-                alternate_number_of_tickets_buying[1] -= 3;
-
-                if (alternate_number_of_tickets_buying[0] > 2) {
-                    alternate_number_of_tickets_buying[0] -= 2;
-                } else if (alternate_number_of_tickets_buying[2] > 2) {
-                    alternate_number_of_tickets_buying[2] -= 2;
+                if (alternate_family_price < alternate_group_price) {
+                    family_is_better = true;
                 }
-                alternate_number_of_tickets_buying[3] += 1;
+
             }
-
-            if (days_in_a_row == 1) {
-                for (int i = 0; i < 5; i++) {alternate_total_price_family += (alternate_number_of_tickets_buying[i] * ticket_one_day_prices[i]);}
-            } else if (days_in_a_row == 2) {
-                for (int i = 0; i < 5; i++) {alternate_total_price_family += (alternate_number_of_tickets_buying[i] * ticket_two_day_prices[i]);}
-            }
-
-            if (alternate_total_price_family < alternate_total_price_group) {family_is_better = true;}
-
-            alternate_total_price_family += attractions_cost;
 
 
             final_cost += attractions_cost;
@@ -293,10 +298,44 @@ public class Main {
             System.out.println("For " + days_in_a_row + " day(s) in a row on " + week[day_of_week]);
             System.out.println("For a total price of: " + final_cost + "0$");
             System.out.println("");
-            System.out.print("How ever, costs can be reduced if ");
-            if (!family_is_better) {
-                System.out.println("all tickets are replaced with group tickets with a total price of: " + alternate_total_price_group);
+            if (alternate_prices_possible) {
+                System.out.print("However if tickets are ");
+                if (family_is_better) {
+                    System.out.println("bought in the following way, costs can be reduced: ");
+                    System.out.println("Adult tickets    : " + alternate_number_of_tickets_buying[0]);
+                    System.out.println("Children tickets : " + alternate_number_of_tickets_buying[1]);
+                    System.out.println("Senior tickets   : " + alternate_number_of_tickets_buying[2]);
+                    System.out.println("Family tickets   : " + alternate_number_of_tickets_buying[3]);
+                    System.out.println("Group tickets    : " + alternate_number_of_tickets_buying[4]);
+                } else {
+                    System.out.println("replaced with group tickets, then costs can be reduced.");
+                }
+                System.out.println("");
+                System.out.print("Would you like to replace prices? (0: no | 1: yes): ");
+                replace_tickets = scanner.nextInt();
+                while (replace_tickets < 0 || replace_tickets > 1) { //validation
+                    System.out.print("Wrong input. please type either 1 or 0: ");
+                    replace_tickets = scanner.nextInt();
+                }
+                if (replace_tickets == 1) {
+                    if (family_is_better) {
+                        number_of_tickets_buying = alternate_number_of_tickets_buying;
+                        final_cost = alternate_family_price;
+                    } else {
+                        number_of_tickets_buying[0] = 0;
+                        number_of_tickets_buying[1] = 0;
+                        number_of_tickets_buying[2] = 0;
+                        number_of_tickets_buying[3] = 0;
+                        number_of_tickets_buying[4] = total_tickets;
+                        final_cost = alternate_group_price;
+                    }
+                    System.out.println("Your final price is: " + final_cost + "0$");
+                }
+
             }
+
+
+
             System.out.println("Your booking number is:" + booking_number);
             System.out.println("");
 
